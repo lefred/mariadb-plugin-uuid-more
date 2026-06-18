@@ -1,0 +1,53 @@
+--echo #
+--echo # UUID metadata and conversion functions
+--echo #
+
+INSTALL SONAME 'uuid_more';
+
+SET @uuid_v1= '896e34e0-2d0c-11ea-8000-001122334455';
+SET @uuid_v4= 'f47ac10b-58cc-4372-a567-0e02b2c3d479';
+SET @uuid_v6= '1e02d0c8-96e3-64e0-8000-001122334455';
+SET @uuid_v7= '018bcfe5-687b-7000-8000-000000000000';
+
+SELECT uuid_node(@uuid_v1) AS v1_node,
+       uuid_node(@uuid_v6) AS v6_node,
+       uuid_node(@uuid_v4) AS v4_node;
+
+SELECT uuid_is_ordered(@uuid_v1) AS v1_ordered,
+       uuid_is_ordered(@uuid_v6) AS v6_ordered,
+       uuid_is_ordered(@uuid_v7) AS v7_ordered,
+       uuid_is_ordered(@uuid_v4) AS v4_ordered;
+
+SELECT uuid_variant('00000000-0000-0000-0000-000000000000') AS ncs_variant,
+       uuid_variant(@uuid_v4) AS rfc_variant,
+       uuid_variant('00000000-0000-0000-c000-000000000000') AS microsoft_variant,
+       uuid_variant('00000000-0000-0000-e000-000000000000') AS future_variant;
+
+SELECT uuid_to_base64(@uuid_v4) AS v4_base64,
+       base64_to_uuid(uuid_to_base64(@uuid_v4)) AS v4_from_base64;
+
+SELECT uuid_canonical('F47AC10B58CC4372A5670E02B2C3D479') AS canonical_bare,
+       uuid_canonical('F47AC10B-58CC-4372-A567-0E02B2C3D479') AS canonical_hyphenated;
+
+SELECT json_value(uuid_info(@uuid_v7), '$.version') AS info_version,
+       json_value(uuid_info(@uuid_v7), '$.variant') AS info_variant,
+       json_value(uuid_info(@uuid_v7), '$.timestamp') AS info_timestamp,
+       json_value(uuid_info(@uuid_v7), '$.sortable') AS info_sortable;
+
+SELECT json_value(uuid_info(@uuid_v4), '$.timestamp') AS v4_info_timestamp,
+       json_value(uuid_info(@uuid_v4), '$.sortable') AS v4_info_sortable;
+
+SELECT uuid_node(NULL) AS null_node,
+       uuid_is_ordered(NULL) AS null_ordered,
+       uuid_variant(NULL) AS null_variant,
+       uuid_to_base64(NULL) AS null_to_base64,
+       base64_to_uuid(NULL) AS null_from_base64,
+       uuid_canonical(NULL) AS null_canonical,
+       uuid_info(NULL) AS null_info;
+
+--error ER_UNKNOWN_ERROR
+SELECT uuid_canonical('not-a-uuid');
+--error ER_UNKNOWN_ERROR
+SELECT base64_to_uuid('not-base64');
+
+UNINSTALL SONAME 'uuid_more';
